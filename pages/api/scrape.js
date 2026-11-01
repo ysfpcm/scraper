@@ -46,15 +46,17 @@ export default async function handler(req, res) {
 
     // Read the existing JSON data from the file if it exists
     let existingData = [];
-    if (fs.existsSync(filePath)) {
-      try {
-        const fileData = fs.readFileSync(filePath, 'utf8');
-        if (fileData && fileData.trim().length > 0) {
-          existingData = JSON.parse(fileData);
-        }
-      } catch (error) {
-        console.error('Error parsing existing JSON data:', error);
-        existingData = [];
+    try {
+      const fileData = fs.readFileSync(filePath, 'utf8');
+      existingData = JSON.parse(fileData);
+      if (!Array.isArray(existingData)) {
+        throw new Error('Expected scraped data to be a JSON array');
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('Error reading existing JSON data:', error);
+        res.status(500).json({ message: 'Error reading existing scraped data', error: error.message });
+        return;
       }
     }
 
