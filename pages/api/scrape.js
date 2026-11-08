@@ -40,6 +40,7 @@ export default async function handler(req, res) {
 
   try {
     const articles = [];
+    const failedUrls = [];
 
     // Define the output path
     const filePath = path.join(process.cwd(), 'data', 'scrapedData.json');
@@ -83,9 +84,12 @@ export default async function handler(req, res) {
 
         if (title && content.trim()) {
           articles.push({ title, content: content.trim(), url: TARGET_URL });
+        } else {
+          failedUrls.push(TARGET_URL);
         }
       } catch (error) {
         console.error(`Error fetching URL (${TARGET_URL}):`, error.message);
+        failedUrls.push(TARGET_URL);
         continue;
       }
     }
@@ -103,6 +107,11 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error('Error writing JSON data to file:', error);
       res.status(500).json({ message: 'Error saving scraped data', error: error.message });
+      return;
+    }
+
+    if (failedUrls.length > 0) {
+      res.status(502).json({ message: 'Scraping incomplete', data: articles, failedUrls });
       return;
     }
 
