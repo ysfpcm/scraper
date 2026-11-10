@@ -47,12 +47,14 @@ export default async function handler(req, res) {
 
     // Read the existing JSON data from the file if it exists
     let existingData = [];
+    let existingMode;
     try {
       const fileData = fs.readFileSync(filePath, 'utf8');
       existingData = JSON.parse(fileData);
       if (!Array.isArray(existingData)) {
         throw new Error('Expected scraped data to be a JSON array');
       }
+      existingMode = fs.statSync(filePath).mode & 0o777;
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('Error reading existing JSON data:', error);
@@ -103,7 +105,21 @@ export default async function handler(req, res) {
     // Write the JSON data to a file
     try {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, jsonContent, 'utf8');
+      const tempDir = fs.mkdtempSync(path.join(path.dirname(filePath), '.scrapedData-'));
+      try {
+        const tempFile = path.join(tempDir, 'scrapedData.json');
+        fs.writeFileSync(tempFile, jsonContent, 'utf8');
+        if (existingMode !== undefined) {
+          fs.chmodSync(tempFile, existingMode);
+        }
+        fs.renameSync(tempFile, filePath);
+      } finally {
+        try {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        } catch (cleanupError) {
+          console.error('Error removing temporary scraped data:', cleanupError);
+        }
+      }
     } catch (error) {
       console.error('Error writing JSON data to file:', error);
       res.status(500).json({ message: 'Error saving scraped data', error: error.message });
