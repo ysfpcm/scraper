@@ -32,6 +32,21 @@ const TARGET_URLS = [
   'https://help.exatouch.com/knowledge-base/label-a-modifier-group/',
 ];
 
+function readExistingData(filePath) {
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!Array.isArray(data)) {
+      throw new Error('Expected scraped data to be a JSON array');
+    }
+    return { data, mode: fs.statSync(filePath).mode & 0o777 };
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return { data: [], mode: undefined };
+    }
+    throw error;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ message: 'Only GET requests are allowed' });
@@ -46,21 +61,13 @@ export default async function handler(req, res) {
     const filePath = path.join(process.cwd(), 'data', 'scrapedData.json');
 
     // Read the existing JSON data from the file if it exists
-    let existingData = [];
-    let existingMode;
+    let existingData;
     try {
-      const fileData = fs.readFileSync(filePath, 'utf8');
-      existingData = JSON.parse(fileData);
-      if (!Array.isArray(existingData)) {
-        throw new Error('Expected scraped data to be a JSON array');
-      }
-      existingMode = fs.statSync(filePath).mode & 0o777;
+      existingData = readExistingData(filePath).data;
     } catch (error) {
-      if (error.code !== 'ENOENT') {
-        console.error('Error reading existing JSON data:', error);
-        res.status(500).json({ message: 'Error reading existing scraped data', error: error.message });
-        return;
-      }
+      console.error('Error reading existing JSON data:', error);
+      res.status(500).json({ message: 'Error reading existing scraped data', error: error.message });
+      return;
     }
 
     // Loop through each URL
@@ -96,8 +103,18 @@ export default async function handler(req, res) {
       }
     }
 
-    // Append the new articles to the existing data
-    const updatedData = [...existingData, ...articles];
+    let currentData;
+    let currentMode;
+    try {
+      ({ data: currentData, mode: currentMode } = readExistingData(filePath));
+    } catch (error) {
+      console.error('Error reading existing JSON data:', error);
+      res.status(500).json({ message: 'Error reading existing scraped data', error: error.message });
+      return;
+    }
+
+    const savedArticles = articles.filter(article => !currentData.some(existing => existing.url === article.url));
+    const updatedData = [...currentData, ...savedArticles];
 
     // Convert the updated data into JSON
     const jsonContent = JSON.stringify(updatedData, null, 2);
@@ -109,8 +126,8 @@ export default async function handler(req, res) {
       try {
         const tempFile = path.join(tempDir, 'scrapedData.json');
         fs.writeFileSync(tempFile, jsonContent, 'utf8');
-        if (existingMode !== undefined) {
-          fs.chmodSync(tempFile, existingMode);
+        if (currentMode !== undefined) {
+          fs.chmodSync(tempFile, currentMode);
         }
         fs.renameSync(tempFile, filePath);
       } finally {
@@ -127,12 +144,12 @@ export default async function handler(req, res) {
     }
 
     if (failedUrls.length > 0) {
-      res.status(502).json({ message: 'Scraping incomplete', data: articles, failedUrls });
+      res.status(502).json({ message: 'Scraping incomplete', data: savedArticles, failedUrls });
       return;
     }
 
     // Send the JSON data as response
-    res.status(200).json({ message: 'Scraping successful', data: articles });
+    res.status(200).json({ message: 'Scraping successful', data: savedArticles });
   } catch (error) {
     console.error('Error scraping website:', error);
     res.status(500).json({ message: 'Error scraping website', error: error.message });

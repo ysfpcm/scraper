@@ -26,6 +26,8 @@ If any page cannot be fetched or does not contain a title and content, the
 response has status 502, with those URLs in `failedUrls`. Successfully scraped
 articles are still saved and returned in `data`; retrying skips those articles
 and attempts the missing URLs again. File read or write errors return status 500.
+Overlapping requests handled by the same server process merge their results;
+avoid concurrent scrapes across separate processes sharing the same data file.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
