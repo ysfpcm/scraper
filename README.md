@@ -21,6 +21,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 Send a GET request to `/api/scrape` to scrape the configured articles into
 `data/scrapedData.json`. URLs already in the file are skipped. A successful
 response has status 200 and contains the newly saved articles in `data`.
+When no new articles need saving, the existing file is not rewritten.
 
 If any page cannot be fetched or does not contain a title and content, the
 response has status 502, with those URLs in `failedUrls`. Successfully scraped

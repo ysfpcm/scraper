@@ -114,33 +114,32 @@ export default async function handler(req, res) {
     }
 
     const savedArticles = articles.filter(article => !currentData.some(existing => existing.url === article.url));
-    const updatedData = [...currentData, ...savedArticles];
+    if (savedArticles.length > 0) {
+      const updatedData = [...currentData, ...savedArticles];
+      const jsonContent = JSON.stringify(updatedData, null, 2);
 
-    // Convert the updated data into JSON
-    const jsonContent = JSON.stringify(updatedData, null, 2);
-
-    // Write the JSON data to a file
-    try {
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      const tempDir = fs.mkdtempSync(path.join(path.dirname(filePath), '.scrapedData-'));
       try {
-        const tempFile = path.join(tempDir, 'scrapedData.json');
-        fs.writeFileSync(tempFile, jsonContent, 'utf8');
-        if (currentMode !== undefined) {
-          fs.chmodSync(tempFile, currentMode);
-        }
-        fs.renameSync(tempFile, filePath);
-      } finally {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        const tempDir = fs.mkdtempSync(path.join(path.dirname(filePath), '.scrapedData-'));
         try {
-          fs.rmSync(tempDir, { recursive: true, force: true });
-        } catch (cleanupError) {
-          console.error('Error removing temporary scraped data:', cleanupError);
+          const tempFile = path.join(tempDir, 'scrapedData.json');
+          fs.writeFileSync(tempFile, jsonContent, 'utf8');
+          if (currentMode !== undefined) {
+            fs.chmodSync(tempFile, currentMode);
+          }
+          fs.renameSync(tempFile, filePath);
+        } finally {
+          try {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          } catch (cleanupError) {
+            console.error('Error removing temporary scraped data:', cleanupError);
+          }
         }
+      } catch (error) {
+        console.error('Error writing JSON data to file:', error);
+        res.status(500).json({ message: 'Error saving scraped data', error: error.message });
+        return;
       }
-    } catch (error) {
-      console.error('Error writing JSON data to file:', error);
-      res.status(500).json({ message: 'Error saving scraped data', error: error.message });
-      return;
     }
 
     if (failedUrls.length > 0) {
