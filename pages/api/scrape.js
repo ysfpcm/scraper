@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     // Loop through each URL
     for (const TARGET_URL of TARGET_URLS) {
       // Skip URLs that have already been scraped
-      if (existingData.some(article => article.url === TARGET_URL)) {
+      if (existingData.some(article => article?.url === TARGET_URL)) {
         continue;
       }
 
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const savedArticles = articles.filter(article => !currentData.some(existing => existing.url === article.url));
+    const savedArticles = articles.filter(article => !currentData.some(existing => existing?.url === article.url));
     if (savedArticles.length > 0) {
       const updatedData = [...currentData, ...savedArticles];
       const jsonContent = JSON.stringify(updatedData, null, 2);
