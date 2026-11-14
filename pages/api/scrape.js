@@ -47,6 +47,35 @@ function readExistingData(filePath) {
   }
 }
 
+function extractContent($) {
+  const lines = [];
+  let currentLine = '';
+
+  function flush() {
+    if (currentLine.trim()) {
+      lines.push(currentLine.trim());
+    }
+    currentLine = '';
+  }
+
+  function visit(node) {
+    const isBlock = node.name === 'p' || node.name === 'li';
+    if (isBlock) flush();
+    if (node.type === 'text') currentLine += node.data;
+    if (node.children) node.children.forEach(visit);
+    if (isBlock) flush();
+  }
+
+  $('p, li').each((index, element) => {
+    for (let parent = element.parent; parent; parent = parent.parent) {
+      if (parent.name === 'p' || parent.name === 'li') return;
+    }
+    visit(element);
+  });
+
+  return lines.join('\n');
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -83,14 +112,8 @@ export default async function handler(req, res) {
         const { data } = await axios.get(TARGET_URL, { timeout: 10000 });
         const $ = load(data);
 
-        // Extract desired data, including dropdown content
         const title = $('h1, h2, h3').first().text().trim();
-        let content = '';
-
-        // Extract all paragraph content, including content from dropdowns
-        $('p, li').each((i, elem) => {
-          content += $(elem).text().trim() + '\n';
-        });
+        const content = extractContent($);
 
         if (title && content.trim()) {
           articles.push({ title, content: content.trim(), url: TARGET_URL });
