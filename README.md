@@ -23,7 +23,8 @@ Send a GET request to `/api/scrape` to scrape the configured articles into
 response has status 200 and contains the newly saved articles in `data`.
 When no new articles need saving, the existing file is not rewritten.
 Nested paragraphs and list items are extracted once in document order; articles
-already saved in the file are not reprocessed.
+already saved in the file are not reprocessed. Line breaks within paragraphs and
+list items separate adjacent text onto new lines.
 
 If any page cannot be fetched or does not contain a title and content, the
 response has status 502, with those URLs in `failedUrls`. Successfully scraped
