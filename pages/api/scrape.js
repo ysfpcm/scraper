@@ -113,7 +113,9 @@ export default async function handler(req, res) {
         const { data } = await axios.get(TARGET_URL, { timeout: 10000 });
         const $ = load(data);
 
-        const title = $('h1, h2, h3').first().text().trim();
+        const title = $('h1, h2, h3').toArray()
+          .map(element => $(element).clone().find('script, style').remove().end().text().trim())
+          .find(Boolean);
         const content = extractContent($);
 
         if (title && content.trim()) {
