@@ -12,6 +12,17 @@ export default function Home() {
           height={38}
           priority
         />
+        <div className="flex flex-col gap-2 items-center sm:items-start">
+          <a
+            className="rounded-full bg-foreground text-background px-5 py-3 text-sm font-semibold"
+            href="/api/scrape"
+          >
+            Scrape articles
+          </a>
+          <p className="text-sm text-center sm:text-left">
+            Fetch configured articles and view the JSON response. This may take several minutes.
+          </p>
+        </div>
         <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2">
             Get started by editing{" "}
