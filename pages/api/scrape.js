@@ -60,7 +60,7 @@ function extractContent($) {
 
   function visit(node) {
     if (node.name === 'script' || node.name === 'style') return;
-    const isBlock = node.name === 'p' || node.name === 'li';
+    const isBlock = node.name === 'p' || node.name === 'li' || node.name === 'div';
     if (isBlock || node.name === 'br') flush();
     if (node.type === 'text') currentLine += node.data;
     if (node.children) node.children.forEach(visit);
