@@ -33,18 +33,21 @@ const TARGET_URLS = [
 ];
 
 function readExistingData(filePath) {
+  let contents;
   try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    if (!Array.isArray(data)) {
-      throw new Error('Expected scraped data to be a JSON array');
-    }
-    return { data, mode: fs.statSync(filePath).mode & 0o777 };
+    contents = fs.readFileSync(filePath, 'utf8');
   } catch (error) {
     if (error.code === 'ENOENT') {
       return { data: [], mode: undefined };
     }
     throw error;
   }
+
+  const data = JSON.parse(contents);
+  if (!Array.isArray(data)) {
+    throw new Error('Expected scraped data to be a JSON array');
+  }
+  return { data, mode: fs.statSync(filePath).mode & 0o777 };
 }
 
 function extractTitle($) {
