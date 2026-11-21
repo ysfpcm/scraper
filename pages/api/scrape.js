@@ -47,6 +47,19 @@ function readExistingData(filePath) {
   }
 }
 
+function extractTitle($) {
+  function headingText(node) {
+    if (node.name === 'script' || node.name === 'style') return '';
+    if (node.name === 'br') return ' ';
+    if (node.type === 'text') return node.data;
+    return (node.children || []).map(headingText).join('');
+  }
+
+  return $('h1, h2, h3').toArray()
+    .map(element => headingText(element).replace(/[ \t\r\n\f]+/g, ' ').trim())
+    .find(Boolean);
+}
+
 function extractContent($) {
   const lines = [];
   let currentLine = '';
@@ -113,9 +126,7 @@ export default async function handler(req, res) {
         const { data } = await axios.get(TARGET_URL, { timeout: 10000 });
         const $ = load(data);
 
-        const title = $('h1, h2, h3').toArray()
-          .map(element => $(element).clone().find('script, style').remove().end().text().trim())
-          .find(Boolean);
+        const title = extractTitle($);
         const content = extractContent($);
 
         if (title && content.trim()) {
