@@ -68,8 +68,9 @@ function extractContent($) {
   let currentLine = '';
 
   function flush() {
-    if (currentLine.trim()) {
-      lines.push(currentLine.trim());
+    const line = currentLine.replace(/[ \t\r\n\f]+/g, ' ').trim();
+    if (line) {
+      lines.push(line);
     }
     currentLine = '';
   }
