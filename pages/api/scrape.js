@@ -66,6 +66,13 @@ function extractTitle($) {
 function extractContent($) {
   const lines = [];
   let currentLine = '';
+  const blockElements = new Set([
+    'address', 'article', 'aside', 'blockquote', 'dd', 'details', 'div', 'dl',
+    'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2',
+    'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p',
+    'pre', 'section', 'summary', 'table', 'tbody', 'td', 'tfoot', 'th',
+    'thead', 'tr', 'ul',
+  ]);
 
   function flush() {
     const line = currentLine.replace(/[ \t\r\n\f]+/g, ' ').trim();
@@ -77,7 +84,7 @@ function extractContent($) {
 
   function visit(node) {
     if (node.name === 'script' || node.name === 'style') return;
-    const isBlock = node.name === 'p' || node.name === 'li' || node.name === 'div';
+    const isBlock = blockElements.has(node.name);
     if (isBlock || node.name === 'br') flush();
     if (node.type === 'text') currentLine += node.data;
     if (node.children) node.children.forEach(visit);

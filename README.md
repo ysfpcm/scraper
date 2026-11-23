@@ -23,11 +23,12 @@ Send a GET request to `/api/scrape` to scrape the configured articles into
 response has status 200 and contains the newly saved articles in `data`.
 When no new articles need saving, the existing file is not rewritten.
 Nested paragraphs and list items are extracted once in document order; articles
-already saved in the file are not reprocessed. Line breaks within paragraphs and
-list items, and nested div blocks, separate adjacent text onto new lines. Script
-and style content is excluded from extracted text. HTML whitespace within each
-content line is normalized to spaces. The first heading with
-nonempty text is used as the title, ignoring script and style content. Heading
+already saved in the file are not reprocessed. Line breaks and nested block
+elements (such as divs, sections, and blockquotes) within paragraphs and list
+items separate adjacent text onto new lines. Script and style content is excluded
+from extracted text. HTML whitespace within each content line is normalized to
+spaces. The first heading with nonempty text is used as the title, ignoring
+script and style content. Heading
 line breaks and HTML whitespace are normalized to spaces.
 
 If any page cannot be fetched or does not contain a title and content, the
